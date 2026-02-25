@@ -1,4 +1,4 @@
-# Tugas 1 Pemrograman Mobile SI 2026
+# Tugas 1 Pemrograman Aplikasi Bergerak SI 2026
 Nurhidayah | 2409116002 A'24
 
 ## 🛍️ 1. Halaman Katalog (Album Taste)
@@ -38,3 +38,111 @@ Setelah pengguna menekan tombol konfirmasi, aplikasi akan menampilkan notifikasi
 3. Atur jumlah / hapus item
 4. Klik **Checkout**
 5. Konfirmasi → **Order placed**
+
+Santai 😄 ini aku buatin **judul + penjelasan per file (per .dart)** yang bisa langsung kamu salin ke laporan. Sudah dibuat formal tapi tetap gampang dipahami.
+
+# 📱 Penjelasan Implementasi Kode Program
+
+## 1. `main.dart`
+
+File `main.dart` merupakan titik awal (entry point) dari aplikasi Flutter. Pada file ini, aplikasi dijalankan menggunakan fungsi `main()` yang membungkus `MyApp` dengan `ChangeNotifierProvider`.
+
+Penggunaan **Provider** bertujuan untuk mengelola state aplikasi, khususnya data keranjang belanja (`CartModel`). Dengan pendekatan ini, data cart dapat diakses dan diperbarui dari berbagai halaman dalam aplikasi.
+
+Class `MyApp` merupakan widget utama yang mengatur konfigurasi aplikasi seperti:
+
+* Judul aplikasi (Shopping Cart)
+* Tema aplikasi menggunakan `Material3`
+* Halaman awal (`home`) yang diarahkan ke `ProductListPage`
+
+Dengan struktur ini, aplikasi memiliki arsitektur yang terorganisir dan mendukung pengelolaan state secara efisien.
+
+## 2. `product_list_page.dart`
+
+File ini berfungsi untuk menampilkan halaman katalog produk. Data produk disimpan dalam bentuk list yang berisi objek `AlbumTaste`, yang mencakup informasi seperti nama produk, harga, gambar, dan deskripsi.
+
+Tampilan utama menggunakan `GridView.builder` yang bersifat responsif. Jumlah kolom akan menyesuaikan dengan lebar layar menggunakan `LayoutBuilder`, sehingga aplikasi dapat berjalan dengan baik di berbagai ukuran perangkat.
+
+Setiap produk ditampilkan dalam bentuk card yang terdiri dari:
+
+* Gambar produk
+* Nama dan deskripsi
+* Harga
+* Tombol **Add**
+
+Ketika tombol **Add** ditekan, fungsi `addItem()` dari `CartModel` akan dipanggil untuk menambahkan produk ke dalam keranjang. Selain itu, ditampilkan notifikasi `SnackBar` sebagai feedback kepada pengguna.
+
+Pada bagian AppBar, terdapat ikon keranjang yang dilengkapi badge jumlah item. Badge ini akan otomatis berubah karena menggunakan `Consumer<CartModel>`, yang akan merespon perubahan state secara real-time.
+
+## 3. `cart_page.dart`
+
+File ini digunakan untuk menampilkan halaman keranjang belanja. Data cart diambil menggunakan `Consumer<CartModel>` sehingga tampilan akan otomatis diperbarui ketika terjadi perubahan.
+
+Terdapat dua kondisi utama:
+
+1. **Keranjang kosong**
+
+   * Menampilkan ikon dan pesan *“Your cart is empty”*
+   * Tombol untuk kembali ke halaman katalog
+
+2. **Keranjang berisi**
+
+   * Menampilkan daftar item menggunakan `ListView.builder`
+   * Setiap item memiliki:
+
+     * Gambar produk
+     * Nama dan harga
+     * Kontrol jumlah (tombol + dan -)
+     * Tombol hapus item
+     * Subtotal harga
+
+Di bagian bawah terdapat total harga keseluruhan dan tombol **Checkout**. Ketika tombol checkout ditekan, akan muncul dialog konfirmasi yang menampilkan total harga dan jumlah item.
+
+Jika pengguna menekan tombol **Confirm**, maka:
+
+* Data cart akan dikosongkan
+* Kembali ke halaman sebelumnya
+* Muncul notifikasi *“Order placed!”*
+
+## 4. `product.dart` (Model Produk)
+
+File ini berisi class `AlbumTaste` yang digunakan sebagai model data produk. Class ini menyimpan atribut:
+
+* `id`
+* `name`
+* `price`
+* `image`
+* `description`
+
+Model ini memudahkan pengelolaan data karena setiap produk direpresentasikan sebagai objek yang terstruktur.
+
+## 5. `cart_model.dart`
+
+File ini merupakan inti dari logika aplikasi, yaitu pengelolaan state keranjang belanja. Class `CartModel` menggunakan `ChangeNotifier` sehingga setiap perubahan data dapat langsung memperbarui UI.
+
+Data cart disimpan dalam bentuk `Map<String, CartItem>` untuk mempermudah pencarian dan manipulasi data.
+
+Fungsi utama dalam class ini meliputi:
+
+* `addItem()` → menambahkan produk ke cart
+* `removeItem()` → menghapus produk
+* `increaseQuantity()` → menambah jumlah item
+* `decreaseQuantity()` → mengurangi jumlah item
+* `clear()` → menghapus seluruh isi cart
+
+Selain itu, terdapat getter seperti:
+
+* `totalPrice` → menghitung total harga
+* `totalQuantity` → menghitung total item
+* `isEmpty` → mengecek apakah cart kosong
+
+Setiap perubahan akan memanggil `notifyListeners()` agar UI langsung ter-update.
+
+## 6. `cart_item.dart`
+
+File ini berisi class `CartItem` yang merepresentasikan item di dalam keranjang. Class ini menyimpan:
+
+* Data produk (`AlbumTaste`)
+* Jumlah item (`quantity`)
+
+Selain itu, terdapat getter `totalPrice` yang digunakan untuk menghitung total harga berdasarkan jumlah item yang dipilih.
