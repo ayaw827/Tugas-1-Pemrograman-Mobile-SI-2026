@@ -91,6 +91,180 @@ Dengan struktur ini, aplikasi memiliki arsitektur yang terorganisir dan mendukun
 
 ## 2. `product_list_page.dart`
 
+```dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../model/product.dart';
+import '../model/cart_model.dart';
+import 'cart_page.dart';
+
+class ProductListPage extends StatelessWidget {
+  const ProductListPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final products = [
+      AlbumTaste(
+        id: '1',
+        name: 'TASTE - Savory Ver.',
+        price: 350000,
+        image: 'savory.jpg',
+        description: 'CD-R, photobook, postcards, secret message card.',
+      ),
+      AlbumTaste(
+        id: '2',
+        name: 'TASTE - Full Spread Ver.',
+        price: 420000,
+        image: 'fullspread.jpg',
+        description: '96p photobook, poster, sticker, photocard.',
+      ),
+      AlbumTaste(
+        id: '3',
+        name: 'TASTE - Tin Case Ver.',
+        price: 500000,
+        image: 'tincase.jpg',
+        description: 'Tin case, mini CD, accordion photos, pin.',
+      ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Album Taste'),
+        actions: [
+          Consumer<CartModel>(
+            builder: (context, cart, child) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CartPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (cart.itemCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          '${cart.itemCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          int crossAxisCount = (constraints.maxWidth / 250).floor();
+          if (crossAxisCount < 1) crossAxisCount = 1;
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _buildProductCard(context, product);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, AlbumTaste product) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Container(
+              margin: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.pink.shade50,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/images/${product.image}',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 6,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    children: [
+                      Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        product.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                      Text('Rp ${product.price.toStringAsFixed(0)}'),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<CartModel>().addItem(product);
+                    },
+                    child: const Text('Add'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
 File ini berfungsi untuk menampilkan halaman katalog produk. Data produk disimpan dalam bentuk list yang berisi objek `AlbumTaste`, yang mencakup informasi seperti nama produk, harga, gambar, dan deskripsi.
 
 Tampilan utama menggunakan `GridView.builder` yang bersifat responsif. Jumlah kolom akan menyesuaikan dengan lebar layar menggunakan `LayoutBuilder`, sehingga aplikasi dapat berjalan dengan baik di berbagai ukuran perangkat.
@@ -107,6 +281,142 @@ Ketika tombol **Add** ditekan, fungsi `addItem()` dari `CartModel` akan dipanggi
 Pada bagian AppBar, terdapat ikon keranjang yang dilengkapi badge jumlah item. Badge ini akan otomatis berubah karena menggunakan `Consumer<CartModel>`, yang akan merespon perubahan state secara real-time.
 
 ## 3. `cart_page.dart`
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../model/cart_model.dart';
+
+class CartPage extends StatelessWidget {
+  const CartPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Shopping Cart'),
+        actions: [
+          Consumer<CartModel>(
+            builder: (context, cart, child) {
+              return cart.isEmpty
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Clear Cart?'),
+                            content: const Text('Remove all items from cart?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  context.read<CartModel>().clear();
+                                  Navigator.pop(ctx);
+                                },
+                                child: const Text('Clear'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+            },
+          ),
+        ],
+      ),
+      body: Consumer<CartModel>(
+        builder: (context, cart, child) {
+          if (cart.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shopping_cart_outlined, size: 100),
+                  const SizedBox(height: 20),
+                  const Text('Your cart is empty'),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Continue Shopping'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: cart.itemsList.length,
+                  itemBuilder: (context, index) {
+                    final cartItem = cart.itemsList[index];
+                    final product = cartItem.product;
+
+                    return ListTile(
+                      title: Text(product.name),
+                      subtitle: Text('Rp ${product.price}'),
+                      trailing: Text('x${cartItem.quantity}'),
+                    );
+                  },
+                ),
+              ),
+
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total: Rp ${cart.totalPrice}'),
+                    ElevatedButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Checkout'),
+                            content: Text(
+                              'Total: Rp ${cart.totalPrice}\nItems: ${cart.totalQuantity}',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  cart.clear();
+                                  Navigator.pop(ctx);
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Order placed!'),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Confirm'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: const Text('Checkout'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+```
 
 File ini digunakan untuk menampilkan halaman keranjang belanja. Data cart diambil menggunakan `Consumer<CartModel>` sehingga tampilan akan otomatis diperbarui ketika terjadi perubahan.
 
@@ -138,6 +448,75 @@ Jika pengguna menekan tombol **Confirm**, maka:
 
 ## 4. `product.dart` (Model Produk)
 
+```dart
+import 'package:flutter/foundation.dart';
+import 'product.dart';
+import 'cart_item.dart';
+
+class CartModel extends ChangeNotifier {
+  // Private state - Map for O(1) lookup
+  final Map<String, CartItem> _items = {};
+
+  // Getters
+  Map<String, CartItem> get items => _items;
+
+  List<CartItem> get itemsList => _items.values.toList();
+
+  int get itemCount => _items.length;
+
+  int get totalQuantity {
+    return _items.values.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  double get totalPrice {
+    return _items.values.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+
+  bool get isEmpty => _items.isEmpty;
+
+  // Methods
+  void addItem(AlbumTaste product) {
+    if (_items.containsKey(product.id)) {
+      // Product already in cart, increase quantity
+      _items[product.id]!.quantity++;
+    } else {
+      // New product, add to cart
+      _items[product.id] = CartItem(product: product);
+    }
+    notifyListeners(); // ← Notif UInyaw!
+  }
+
+  void removeItem(String productId) {
+    _items.remove(productId);
+    notifyListeners();
+  }
+
+  void increaseQuantity(String productId) {
+    if (_items.containsKey(productId)) {
+      _items[productId]!.quantity++;
+      notifyListeners();
+    }
+  }
+
+  void decreaseQuantity(String productId) {
+    if (!_items.containsKey(productId)) return;
+
+    if (_items[productId]!.quantity > 1) {
+      _items[productId]!.quantity--;
+    } else {
+      // If quantity becomes 0, remove item
+      _items.remove(productId);
+    }
+    notifyListeners();
+  }
+
+  void clear() {
+    _items.clear();
+    notifyListeners();
+  }
+}
+```
+
 File ini berisi class `AlbumTaste` yang digunakan sebagai model data produk. Class ini menyimpan atribut:
 
 * `id`
@@ -149,6 +528,71 @@ File ini berisi class `AlbumTaste` yang digunakan sebagai model data produk. Cla
 Model ini memudahkan pengelolaan data karena setiap produk direpresentasikan sebagai objek yang terstruktur.
 
 ## 5. `cart_model.dart`
+
+```dart
+import 'package:flutter/foundation.dart';
+import 'product.dart';
+import 'cart_item.dart';
+
+class CartModel extends ChangeNotifier {
+  final Map<String, CartItem> _items = {};
+
+  // Getters
+  Map<String, CartItem> get items => _items;
+
+  List<CartItem> get itemsList => _items.values.toList();
+
+  int get itemCount => _items.length;
+
+  int get totalQuantity {
+    return _items.values.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  double get totalPrice {
+    return _items.values.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+
+  bool get isEmpty => _items.isEmpty;
+
+  // Methods
+  void addItem(AlbumTaste product) {
+    if (_items.containsKey(product.id)) {
+      _items[product.id]!.quantity++;
+    } else {
+      _items[product.id] = CartItem(product: product);
+    }
+    notifyListeners(); // ← Notif UInyaw!
+  }
+
+  void removeItem(String productId) {
+    _items.remove(productId);
+    notifyListeners();
+  }
+
+  void increaseQuantity(String productId) {
+    if (_items.containsKey(productId)) {
+      _items[productId]!.quantity++;
+      notifyListeners();
+    }
+  }
+
+  void decreaseQuantity(String productId) {
+    if (!_items.containsKey(productId)) return;
+
+    if (_items[productId]!.quantity > 1) {
+      _items[productId]!.quantity--;
+    } else {
+      _items.remove(productId);
+    }
+    notifyListeners();
+  }
+
+  void clear() {
+    _items.clear();
+    notifyListeners();
+  }
+}
+```
 
 File ini merupakan inti dari logika aplikasi, yaitu pengelolaan state keranjang belanja. Class `CartModel` menggunakan `ChangeNotifier` sehingga setiap perubahan data dapat langsung memperbarui UI.
 
@@ -171,6 +615,19 @@ Selain itu, terdapat getter seperti:
 Setiap perubahan akan memanggil `notifyListeners()` agar UI langsung ter-update.
 
 ## 6. `cart_item.dart`
+
+```dart
+import 'product.dart';
+
+class CartItem {
+  final AlbumTaste product;
+  int quantity;
+
+  CartItem({required this.product, this.quantity = 1});
+
+  double get totalPrice => product.price * quantity;
+}
+```
 
 File ini berisi class `CartItem` yang merepresentasikan item di dalam keranjang. Class ini menyimpan:
 
