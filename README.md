@@ -45,8 +45,6 @@ Santai 😄 ini aku buatin **judul + penjelasan per file (per .dart)** yang bisa
 
 ## 1. `main.dart`
 
-## 🧠 main.dart
-
 ```dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
