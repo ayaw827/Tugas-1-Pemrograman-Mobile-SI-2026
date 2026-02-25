@@ -45,6 +45,40 @@ Santai 😄 ini aku buatin **judul + penjelasan per file (per .dart)** yang bisa
 
 ## 1. `main.dart`
 
+## 🧠 main.dart
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'model/cart_model.dart';
+import 'pages/product_list_page.dart';
+
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => CartModel(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Shopping Cart',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const ProductListPage(),
+    );
+  }
+}
+```
+
 File `main.dart` merupakan titik awal (entry point) dari aplikasi Flutter. Pada file ini, aplikasi dijalankan menggunakan fungsi `main()` yang membungkus `MyApp` dengan `ChangeNotifierProvider`.
 
 Penggunaan **Provider** bertujuan untuk mengelola state aplikasi, khususnya data keranjang belanja (`CartModel`). Dengan pendekatan ini, data cart dapat diakses dan diperbarui dari berbagai halaman dalam aplikasi.
